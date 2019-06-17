@@ -1,0 +1,65 @@
+[
+    {
+      "logConfiguration": {
+        "logDriver": "json-file",
+        "options": {
+          "max-size": "50m",
+          "max-file": "2",
+          "labels": "source"
+        }
+      },
+      "command": [
+      {{- $command_length := len .Data.command }}
+      {{- range $i,$v := .Data.command }}
+        "{{ $v }}"{{if $.IncMore $command_length}},{{end}}
+      {{- end }}
+      {{- $_ := $.ResetCounter }}],
+      "cpu": {{ .Data.cpu }},
+      "entryPoint": [],
+      "portMappings": [
+       {
+          "hostPort": 0,
+          "protocol": "tcp",
+          "containerPort": {{ .Data.container_port }}
+        }
+      ],
+      "environment": [
+      {{- $env_length := len .Data.env }}
+      {{- range $k,$v := .Data.env }}
+        {
+          "name": "{{ $k }}",
+          "value": "{{ $v }}"
+        }{{if $.IncMore $env_length}},{{end}}
+      {{- end }}
+      ],
+      {{- $_ := $.ResetCounter }}
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": {{ .Data.ulimit.hard_limit }},
+          "hardLimit": {{ .Data.ulimit.soft_limit }}
+        }
+      ],
+      "mountPoints": [
+      {{- $read_only := .Data.read_only_volume }}
+      {{- $volume_map_length := len .Data.volume_map }}
+      {{- range $k,$v := .Data.volume_map }}
+        {
+          "readOnly": {{ $read_only }},
+          "containerPath": "{{ $k }}",
+          "sourceVolume": "{{ $v }}"
+        }{{if $.IncMore $volume_map_length}},{{end}}
+      {{- end }}
+      ],
+      "memory": {{.Data.mem}},
+      "image": "{{.Data.image}}",
+      "dockerLabels": {
+        "logger": "logspout",
+        "source": "{{.Data.name}}"
+      },
+      "name": "{{ .Data.name}}",
+      "linuxParameters": {
+          "initProcessEnabled": true
+    }
+  }
+]
